@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终端入侵系统</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            z-index: -1;
+            background: 
+                linear-gradient(217deg, rgba(0,255,0,.1), rgba(0,255,0,0) 70.71%),
+                linear-gradient(127deg, rgba(0,255,255,.1), rgba(0,255,255,0) 70.71%),
+                linear-gradient(336deg, rgba(0,0,255,.1), rgba(0,0,255,0) 70.71%);
+        }
+
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+
+        .header {
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .status {
+            font-size: 14px;
+        }
+
+        .terminal {
+            height: calc(100% - 100px);
+            overflow-y: auto;
+            padding: 10px;
+            background-color: rgba(0, 20, 0, 0.7);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .command-line {
+            display: flex;
+            margin-top: 10px;
+            border: 1px solid #0f0;
+            padding: 5px;
+            background-color: rgba(0, 20, 0, 0.7);
+            border-radius: 5px;
+        }
+
+        .prompt {
+            color: #0f0;
+            margin-right: 10px;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .output-line {
+            margin: 5px 0;
+            word-break: break-all;
+        }
+
+        .success {
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .error {
+            color: #f00;
+            text-shadow: 0 0 5px #f00;
+        }
+
+        .warning {
+            color: #ff0;
+            text-shadow: 0 0 5px #ff0;
+        }
+
+        .info {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .hex-dump {
+            font-size: 12px;
+            color: #0f0;
+            word-spacing: 10px;
+            line-height: 1.4;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background-color: #333;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #0f0;
+            width: 0%;
+            transition: width 0.5s;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            transition: opacity 1s;
+        }
+
+        .overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .overlay-text {
+            color: #0f0;
+            font-size: 36px;
+            text-align: center;
+            text-shadow: 0 0 10px #0f0;
+            margin-bottom: 20px;
+        }
+
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-element {
+            position: absolute;
+            font-size: 12px;
+            color: rgba(0, 255, 0, 0.7);
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(50px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="start-overlay">
+        <div class="overlay-text">终端入侵系统</div>
+        <div class="overlay-text" style="font-size: 18px;">点击任意位置开始</div>
+    </div>
+
+    <div class="container">
+        <div class="background"></div>
+        <canvas class="matrix-bg" id="matrix-canvas"></canvas>
+        <div class="grid-bg"></div>
+        <div class="floating-elements" id="floating-elements"></div>
+
+        <div class="header">
+            <div class="title">高级渗透测试终端 v3.7.2</div>
+            <div class="status">状态: <span class="blink" id="status-text">待命</span></div>
+        </div>
+
+        <div class="terminal" id="terminal">
+            <div class="output-line">系统初始化中...</div>
+            <div class="output-line">加载安全协议...</div>
+            <div class="output-line success">系统就绪</div>
+            <div class="output-line">输入 'help' 获取可用命令列表</div>
+        </div>
+
+        <div class="command-line">
+            <div class="prompt">root@cyber:~#</div>
+            <input type="text" id="command-input" autofocus placeholder="输入命令...">
+        </div>
+    </div>
+
+    <script>
+        // 矩阵雨效果
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,./<>?';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+        
+        function drawMatrixRain() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+            
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                
+                drops[i]++;
+            }
+        }
+        
+        // 浮动元素
+        function createFloatingElements() {
+            const container = document.getElementById('floating-elements');
+            const elements = [
+                '01001010', '10101010', 'SECURE', 'ACCESS', 'DENIED',
+                'FIREWALL', 'BREACH', 'SYSTEM', 'PROTOCOL', 'ENCRYPTED',
+                '0xFFAA00', '0x00FF00', 'KERNEL', 'BUFFER', 'OVERRIDE'
+            ];
+            
+            for (let i = 0; i < 20; i++) {
+                const element = document.createElement('div');
+                element.className = 'floating-element';
+                element.textContent = elements[Math.floor(Math.random() * elements.length)];
+                element.style.left = Math.random() * 100 + '%';
+                element.style.animationDuration = (15 + Math.random() * 15) + 's';
+                element.style.animationDelay = (Math.random() * 10) + 's';
+                container.appendChild(element);
+            }
+        }
+        
+        // 终端功能
+        const terminal = document.getElementById('terminal');
+        const commandInput = document.getElementById('command-input');
+        const statusText = document.getElementById('status-text');
+        const startOverlay = document.getElementById('start-overlay');
+        
+        let isHacking = false;
+        let targetSystem = '';
+        
+        const commands = {
+            'help': () => {
+                addOutput('可用命令:', 'info');
+                addOutput('- help: 显示此帮助信息');
+                addOutput('- clear: 清除终端');
+                addOutput('- hack [目标]: 开始入侵指定目标');
+                addOutput('- scan: 扫描可用目标');
+                addOutput('- status: 显示系统状态');
+                addOutput('- exit: 退出终端');
+            },
+            'clear': () => {
+                terminal.innerHTML = '';
+            },
+            'hack': (args) => {
+                if (isHacking) {
+                    addOutput('已有入侵进程正在运行', 'error');
+                    return;
+                }
+                
+                if (!args || args.length === 0) {
+                    addOutput('请指定目标系统', 'error');
+                    addOutput('用法: hack [目标]', 'info');
+                    return;
+                }
+                
+                targetSystem = args.join(' ');
+                startHacking(targetSystem);
+            },
+            'scan': () => {
+                addOutput('扫描网络中...', 'info');
+                
+                setTimeout(() => {
+                    addOutput('发现可用目标:', 'success');
+                    addOutput('- 政府数据库');
+                    addOutput('- 银行系统');
+                    addOutput('- 军事网络');
+                    addOutput('- 安全监控系统');
+                    addOutput('- 电力网格');
+                }, 1500);
+            },
+            'status': () => {
+                addOutput('系统状态: 运行中', 'info');
+                addOutput('CPU: 32%');
+                addOutput('内存: 1.2GB/4GB');
+                addOutput('网络: 已连接 (加密)');
+                addOutput('VPN: 活跃');
+                addOutput('IP: 192.168.1.*** (已隐藏)');
+            },
+            'exit': () => {
+                addOutput('正在关闭终端...', 'warning');
+                setTimeout(() => {
+                    addOutput('再见!', 'success');
+                }, 500);
+            }
+        };
+        
+        function addOutput(text, className = '') {
+            const line = document.createElement('div');
+            line.className = 'output-line ' + className;
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function addHexDump() {
+            const hexLine = document.createElement('div');
+            hexLine.className = 'output-line hex-dump';
+            
+            let hexText = '';
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 4; j++) {
+                    hexText += Math.floor(Math.random() * 256).toString(16).padStart(2, '0') + ' ';
+                }
+                hexText += ' ';
+            }
+            
+            hexLine.textContent = hexText;
+            terminal.appendChild(hexLine);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function addProgressBar(duration, callback) {
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'progress-bar';
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress';
+            
+            progressContainer.appendChild(progressBar);
+            terminal.appendChild(progressContainer);
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            let width = 0;
+            const interval = setInterval(() => {
+                width += 100 / (duration / 100);
+                if (width >= 100) {
+                    width = 100;
+                    clearInterval(interval);
+                    if (callback) callback();
+                }
+                progressBar.style.width = width + '%';
+            }, 100);
+        }
+        
+        function startHacking(target) {
+            isHacking = true;
+            statusText.textContent = '入侵中';
+            
+            addOutput(`开始入侵 ${target}...`, 'warning');
+            
+            setTimeout(() => {
+                addOutput('初始化连接...', 'info');
+                addProgressBar(2000, () => {
+                    addOutput('连接成功', 'success');
+                    
+                    setTimeout(() => {
+                        addOutput('绕过防火墙...', 'info');
+                        addHexDump();
+                        
+                        setTimeout(() => {
+                            addOutput('注入SQL漏洞...', 'info');
+                            addProgressBar(3000, () => {
+                                addOutput('SQL注入成功', 'success');
+                                
+                                setTimeout(() => {
+                                    addOutput('破解密码哈希...', 'info');
+                                    addHexDump();
+                                    addHexDump();
+                                    
+                                    setTimeout(() => {
+                                        addOutput('密码破解成功', 'success');
+                                        addOutput('用户名: admin', 'info');
+                                        addOutput('密码: ********', 'info');
+                                        
+                                        setTimeout(() => {
+                                            addOutput('获取管理员权限...', 'info');
+                                            addProgressBar(2000, () => {
+                                                addOutput('权限提升成功!', 'success');
+                                                
+                                                setTimeout(() => {
+                                                    addOutput('下载敏感数据...', 'info');
+                                                    addProgressBar(4000, () => {
+                                                        addOutput('数据获取完成', 'success');
+                                                        
+                                                        setTimeout(() => {
+                                                            addOutput('清除入侵痕迹...', 'info');
+                                                            
+                                                            setTimeout(() => {
+                                                                addOutput(`成功入侵 ${target}!`, 'success');
+                                                                addOutput('所有操作已完成，无痕迹留下', 'success');
+                                                                
+                                                                statusText.textContent = '已连接';
+                                                                isHacking = false;
+                                                                
+                                                                // 显示成功入侵的全屏提示
+                                                                showSuccessOverlay(target);
+                                                            }, 1500);
+                                                        }, 1000);
+                                                    });
+                                                }, 1000);
+                                            });
+                                        }, 1000);
+                                    }, 2000);
+                                }, 1000);
+                            });
+                        }, 1000);
+                    }, 1000);
+                });
+            }, 500);
+        }
+        
+        function showSuccessOverlay(target) {
+            const overlay = document.createElement('div');
+            overlay.className = 'overlay';
+            overlay.innerHTML = `
+                <div class="overlay-text">入侵成功</div>
+                <div class="overlay-text" style="font-size: 24px;">${target}</div>
+                <div class="overlay-text" style="font-size: 18px;">已获取完全控制权限</div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                }, 1000);
+            }, 3000);
+        }
+        
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const commandText = commandInput.value.trim();
+                if (commandText) {
+                    addOutput(`root@cyber:~# ${commandText}`);
+                    
+                    const [cmd, ...args] = commandText.split(' ');
+                    
+                    if (commands[cmd]) {
+                        commands[cmd](args);
+                    } else {
+                        addOutput(`命令未找到: ${cmd}`, 'error');
+                    }
+                    
+                    commandInput.value = '';
+                }
+            }
+        });
+        
+        // 初始化
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        document.addEventListener('click', () => {
+            startOverlay.classList.add('hidden');
+            commandInput.focus();
+        });
+        
+        setInterval(drawMatrixRain, 50);
+        createFloatingElements();
+    </script>
+</body>
+</html>

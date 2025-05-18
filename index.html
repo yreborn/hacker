@@ -234,11 +234,6 @@
     </style>
 </head>
 <body>
-    <div class="overlay" id="start-overlay">
-        <div class="overlay-text">终端入侵系统</div>
-        <div class="overlay-text" style="font-size: 18px;">点击任意位置开始</div>
-    </div>
-
     <div class="container">
         <div class="background"></div>
         <canvas class="matrix-bg" id="matrix-canvas"></canvas>
@@ -323,7 +318,6 @@
         const terminal = document.getElementById('terminal');
         const commandInput = document.getElementById('command-input');
         const statusText = document.getElementById('status-text');
-        const startOverlay = document.getElementById('start-overlay');
         
         let isHacking = false;
         let targetSystem = '';
@@ -543,10 +537,8 @@
             canvas.height = window.innerHeight;
         });
         
-        document.addEventListener('click', () => {
-            startOverlay.classList.add('hidden');
-            commandInput.focus();
-        });
+        // 自动聚焦到命令输入框
+        commandInput.focus();
         
         setInterval(drawMatrixRain, 50);
         createFloatingElements();
